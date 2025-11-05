@@ -9,6 +9,7 @@
 #### 传统训练是“死记硬背”，不会迁移
 
 之前有研究给AI练“多臂老虎机”（类似选哪个按钮中奖率高），练得再好，换个“猜单词”任务，AI又变回原样。就像学生只会背数学题，换个物理题就懵了——它没学会“通用的探索方法”。
+<img width="554" height="222" alt="image" src="https://github.com/user-attachments/assets/f6418e8f-25a2-4a51-a8c3-0a6d0c648854" />
 
 ## Paprika核心思路
 
