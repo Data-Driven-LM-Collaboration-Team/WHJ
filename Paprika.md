@@ -10,7 +10,7 @@
 
 之前有研究给AI练“多臂老虎机”（类似选哪个按钮中奖率高），练得再好，换个“猜单词”任务，AI又变回原样。就像学生只会背数学题，换个物理题就懵了——它没学会“通用的探索方法”。
 
-<img width="1000" height="400" alt="image" src="https://github.com/user-attachments/assets/f6418e8f-25a2-4a51-a8c3-0a6d0c648854" />
+<img width="1106" height="452" alt="image" src="https://github.com/user-attachments/assets/9cbf03e9-8a88-4f20-821b-db673b118832" />
 
 ## Paprika核心思路
 
