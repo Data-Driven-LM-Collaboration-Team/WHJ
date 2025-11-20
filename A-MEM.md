@@ -30,7 +30,7 @@ Mem就是把AI的每一次交互和学到的东西，都变成这样一张张“
 
 当为新笔记创建链接后，系统会进一步判断新笔记的加入是否应该触发其邻近记忆（来自于最近邻候选集）的更新。LLM会分析新笔记、候选集以及临近记忆，然后决定是否更新以及如何更新临近记忆，在生成一个进化版的临近记忆后将会替换掉原来的临近记忆。
 
-<img width="2123" height="1008" alt="image" src="https://github.com/user-attachments/assets/0d9101b8-90c5-4c78-8428-85e8c84ec896" />
+<img width="3164" height="1504" alt="image" src="https://github.com/user-attachments/assets/8b0585d9-e59e-4d66-98b8-034a2f79b99c" />
 
 ### 对比基线
 
@@ -39,6 +39,9 @@ MemGPT：复刻操作系统的内存管理逻辑，构建核心记忆（即时�
 多跳推理任务（GPT-4o-mini）中，A-MEM与MemGPT分数对比：45.85：25.52，每次交互的Token消耗对比：17000：1200
 
 MemoryBank：基于人类遗忘曲线构建被动衰减的存储模型。遵循艾宾浩斯遗忘曲线，根据记忆强度动态淘汰信息。
+
+
+
 
 MEM1：强化学习驱动的记忆-推理融合
 
