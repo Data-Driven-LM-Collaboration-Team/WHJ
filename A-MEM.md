@@ -39,3 +39,31 @@ MemGPT：复刻操作系统的内存管理逻辑，构建核心记忆（即时�
 多跳推理任务（GPT-4o-mini）中，A-MEM与MemGPT分数对比：45.85：25.52，每次交互的Token消耗对比：17000：1200
 
 MemoryBank：基于人类遗忘曲线构建被动衰减的存储模型。遵循艾宾浩斯遗忘曲线，根据记忆强度动态淘汰信息。
+
+#### 数据集
+
+LoCoMo：数据集包含了十场长时间的对话，每场对话都被注释用于问答和事件摘要任务，同时也适用于多模态对话生成任务。数据集包含类别如下所示：
+
+- Category 1: Multi-hop —— 需要综合多个会话的信息
+- Category 2: Temporal Reasoning —— 需要理解时间顺序和时间线索
+- Category 3: Open-domain knowledge —— 结合对话信息与常识/世界知识
+- Category 4: Single-hop —— 答案仅依赖单个对话会话
+- Category 5: Adversarial —— 测试代理识别无法回答的问题的能力
+
+评估指标：F1 score、BLEU-1、ROUGE-L、ROUGE-2、METEOR、SBERT Similarity
+
+
+
+LongMemEval：全面评估聊天助手在长期交互中的记忆力基准测试，该数据集包含500个高质量问题，用于测试以下五种核心长时记忆能力：
+
+- Information Extraction：从聊天历史中提取特定信息的能力
+- Multi-Session Reasoning：综合多个会话中的信息以回答复杂问题的能力
+- Knowledge Updates：随着时间的推移，动态更新用户信息的能力
+- Temporal Reasoning：理解和推理与时间相关的信息的能力
+- Abstention：在问题超出已知信息范围时，选择不回答的能力
+
+LongMemEval提供了两种标准设置以便进行一致的比较：
+
+1、LongMemEval_S：每个问题的聊天历史大约有115k个token。
+
+2、LongMemEval_M：包含大约500个会话，大约1.5百万个token
