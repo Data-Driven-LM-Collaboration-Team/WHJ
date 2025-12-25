@@ -18,4 +18,5 @@ Evo-Memory 将传统的静态数据集重构为顺序任务流（Sequential Task
 合成 (Synthesis): 将检索到的信息重组为与当前任务相关的上下文，并生成预测。  
 进化 (Evolve): 根据当前的输入、输出和反馈（如任务是否成功），构建新的记忆条目，并更新记忆库。  
 
-所有方法都在该循环下进行评估。
+所有方法都在该循环下进行评估。  
+<img width="561" height="490" alt="image" src="https://github.com/user-attachments/assets/b3500878-8383-4875-bef3-7f06b3147c6b" />
