@@ -115,3 +115,32 @@ LongMemEval提供了两种标准设置以便进行一致的比较：
   - *3B:* "Sweden" (✅ 正确，EM=1)
   - *7B:* "Not mentioned in the conversation" (❌ 错误，过于保守)
 - **结论：** 7B 模型因为经过了更严格的安全/拒答训练（Safety Tuning），导致它在面对“看似模糊”的信息时，倾向于保守地回答不知道，从而丢分。
+
+
+## ExpeL: LLM Agents Are Experiential Learners
+
+1. **收集经验（experience collection）**
+   Agent 先在一批训练任务上反复尝试，通过试错拿到**成功轨迹**和**失败轨迹**。论文中这一阶段借助类似 Reflexion 的机制：失败后先自我反思，再重试，从而得到更有信息量的经验样本。
+
+2. **提炼洞见（insight extraction）**
+   不直接把所有历史轨迹原样塞进提示词，而是让 LLM 从这些成功/失败案例里总结出更抽象的“经验法则”，比如常见错误模式、有效策略、最佳实践。论文里会对已有 insight 列表做动态更新，例如 **ADD / EDIT / UPVOTE / DOWNVOTE**，逐步沉淀出一组更稳定的经验知识。
+
+3. **测试时检索并应用（recall and apply）**
+   到新任务时，Agent 会回忆两类东西：
+
+   * 之前提炼出的**高层经验规则**
+   * 与当前任务相似的**过往成功案例**
+     然后把它们作为上下文输入给 LLM，辅助当前规划和行动。也就是说，ExpeL 不是靠微调学习，而是靠**外部经验记忆 + 文本化知识检索**来提升表现。
+
+* **Reflexion** 更像“这题做错了，现场反思再做一遍”；
+* **ExpeL** 更像“把很多题目的教训记成笔记，考试时翻笔记和例题”。这是论文强调的关键区别。
+
+**方法亮点**
+
+* **不需要参数更新**，适合 GPT-4、Claude 这类闭源 API 模型；
+* **能跨任务积累经验**，不是只在单个任务里短期反思；
+* **有一定迁移能力**，旧任务学到的经验可以帮助新任务。
+
+<img width="640" height="480" alt="expel_train" src="https://github.com/user-attachments/assets/12a1f0d4-9aec-480e-a546-5ce5a02a1d7c" />
+
+<img width="640" height="480" alt="expel_eval" src="https://github.com/user-attachments/assets/f53bedc0-a9c5-42e2-9094-d14f839e1e51" />
