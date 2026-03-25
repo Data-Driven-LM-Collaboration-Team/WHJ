@@ -146,6 +146,6 @@ LongMemEval提供了两种标准设置以便进行一致的比较：
 5.Examine (Look):使用台灯查看物品
 6.PickTwo (PutTwo):放置两个物品
 
-<img width="1379" height="1029" alt="alfworld-train" src="https://github.com/user-attachments/assets/fa92800a-c7e4-4a79-9a72-1ab1208b2715" />
+<img width="640" height="480" alt="image" src="https://github.com/user-attachments/assets/29a950d6-3bb4-4c52-9c76-b6e251c2ecb6" />
 
 <img width="640" height="480" alt="expel_eval" src="https://github.com/user-attachments/assets/f53bedc0-a9c5-42e2-9094-d14f839e1e51" />
