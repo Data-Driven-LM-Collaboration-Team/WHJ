@@ -119,28 +119,33 @@ LongMemEval提供了两种标准设置以便进行一致的比较：
 
 ## ExpeL: LLM Agents Are Experiential Learners
 
-1. **收集经验（experience collection）**
-   Agent 先在一批训练任务上反复尝试，通过试错拿到**成功轨迹**和**失败轨迹**。论文中这一阶段借助类似 Reflexion 的机制：失败后先自我反思，再重试，从而得到更有信息量的经验样本。
+1. **收集经验（Experience Gathering）**
+   Agent 使用基础规划算法（如ReAct）在训练任务上进行多次尝试，通过试错拿到**成功轨迹**和**失败轨迹**。论文中这一阶段借助 Reflexion 框架对失败尝试进行反思，生成改进后的轨迹，从而得到更有信息量的经验样本。
 
-2. **提炼洞见（insight extraction）**
-   不直接把所有历史轨迹原样塞进提示词，而是让 LLM 从这些成功/失败案例里总结出更抽象的“经验法则”，比如常见错误模式、有效策略、最佳实践。论文里会对已有 insight 列表做动态更新，例如 **ADD / EDIT / UPVOTE / DOWNVOTE**，逐步沉淀出一组更稳定的经验知识。
+2. **经验学习（Learning from Experiences）**
+   * **洞察提取 (Insight Extraction)：** 从成功/失败对中抽象出高层次的自然语言规则。
+   * **经验检索 (Trajectory Retrieval)：** 基于任务相似度，从经验池中检索最相关的成功案例作为上下文示例。
 
 3. **测试时检索并应用（recall and apply）**
    到新任务时，Agent 会回忆两类东西：
 
    * 之前提炼出的**高层经验规则**
    * 与当前任务相似的**过往成功案例**
-     然后把它们作为上下文输入给 LLM，辅助当前规划和行动。也就是说，ExpeL 不是靠微调学习，而是靠**外部经验记忆 + 文本化知识检索**来提升表现。
 
-* **Reflexion** 更像“这题做错了，现场反思再做一遍”；
-* **ExpeL** 更像“把很多题目的教训记成笔记，考试时翻笔记和例题”。这是论文强调的关键区别。
+## Alfworld-textworld（基于文本的交互式环境）
+**核心特点**
+* 文本交互：智能体通过自然语言命令（如"pick up apple"）与环境交互，接收文本描述的状态
+* 基于ALFRED：源自视觉-语言任务数据集ALFRED，但移除了视觉模态，专注于推理和规划
+* 部分可观测：智能体需要通过look和examine等动作探索环境来获取完整信息
 
-**方法亮点**
+**任务类型**：
+1.Pick & Place (Put):将物品放到指定位置
+2.Clean (Clean):清洁物品
+3.Heat (Heat):加热物品（需在microwave/oven）
+4.Cool (Cool):冷却物品（需在fridge）
+5.Examine (Look):使用台灯查看物品
+6.PickTwo (PutTwo):放置两个物品
 
-* **不需要参数更新**，适合 GPT-4、Claude 这类闭源 API 模型；
-* **能跨任务积累经验**，不是只在单个任务里短期反思；
-* **有一定迁移能力**，旧任务学到的经验可以帮助新任务。
-
-<img width="640" height="480" alt="expel_train" src="https://github.com/user-attachments/assets/12a1f0d4-9aec-480e-a546-5ce5a02a1d7c" />
+<img width="1379" height="1029" alt="alfworld-train" src="https://github.com/user-attachments/assets/fa92800a-c7e4-4a79-9a72-1ab1208b2715" />
 
 <img width="640" height="480" alt="expel_eval" src="https://github.com/user-attachments/assets/f53bedc0-a9c5-42e2-9094-d14f839e1e51" />
