@@ -146,7 +146,6 @@ LongMemEval提供了两种标准设置以便进行一致的比较：
 5.Examine (Look):使用台灯查看物品
 6.PickTwo (PutTwo):放置两个物品
 
-<img width="640" height="480" alt="image" src="https://github.com/user-attachments/assets/e8dae2a0-b24e-418d-ae55-9eefb3d718cb" />
-
+<img width="640" height="480" alt="image" src="https://github.com/user-attachments/assets/f3f374c5-171d-4b76-834e-7602fb662d75" />
 
 <img width="640" height="480" alt="expel_eval" src="https://github.com/user-attachments/assets/f53bedc0-a9c5-42e2-9094-d14f839e1e51" />
