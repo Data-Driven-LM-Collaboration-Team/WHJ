@@ -117,20 +117,44 @@ LongMemEval提供了两种标准设置以便进行一致的比较：
 - **结论：** 7B 模型因为经过了更严格的安全/拒答训练（Safety Tuning），导致它在面对“看似模糊”的信息时，倾向于保守地回答不知道，从而丢分。
 
 
+
 ## ExpeL: LLM Agents Are Experiential Learners
 
+<img width="2088" height="1008" alt="image-20260330230113472" src="https://github.com/user-attachments/assets/9cddc79d-5a74-4be7-a633-075583906dc4" />
+
 1. **收集经验（Experience Gathering）**
-   Agent 使用基础规划算法（如ReAct）在训练任务上进行多次尝试，通过试错拿到**成功轨迹**和**失败轨迹**。论文中这一阶段借助 Reflexion 框架对失败尝试进行反思，生成改进后的轨迹，从而得到更有信息量的经验样本。
+
+   Agent 在多个训练任务上进行多次尝试，通过试错拿到**成功轨迹**和**失败轨迹**。论文中这一阶段借助**Reflexion**（Shinn et al., 2023）对失败尝试进行反思，生成改进后的轨迹，从而得到更有信息量的经验样本。然后基于收集到的不同任务的经验，形成经验池（Experience Pool）。
 
 2. **经验学习（Learning from Experiences）**
-   * **洞察提取 (Insight Extraction)：** 从成功/失败对中抽象出高层次的自然语言规则。
-   * **经验检索 (Trajectory Retrieval)：** 基于任务相似度，从经验池中检索最相关的成功案例作为上下文示例。
+   
+   Agent 会从经验池中“提炼”出通用的洞察（insights），这些洞察是自然语言写成的“经验法则”，可以跨任务使用。
+   它用了两种方式提炼洞察：
+   * **成功与失败对比：** 把同一个任务的失败轨迹和成功轨迹放在一起，让 LLM 比较，然后总结出“为什么会失败”、“应该怎么做”,从成功/失败对中抽象出高层次的自然语言规则。
+   * **多个成功轨迹总结：** 把多个不同任务的成功轨迹放在一起，让 LLM 总结出“通用的好做法”,找出多个成功任务的共性。
+   
+   在实现上，它会维护一个“洞察列表”，并允许 LLM 对现有洞察进行：
+   * **ADD：** 添加新洞察
+   * **EDIT：** 修改现有洞察
+   * **UPVOTE：** 赞同现有规则（重要性+1）
+   * **DOWNVOTE：** 反对现有规则（重要性-1，到0删除）
+   如果某个洞察的计数降到 0，就会被删掉。这样即使某些成功轨迹里包含“侥幸成功”的错误做法，也不会误导最终洞察。
 
-3. **测试时检索并应用（recall and apply）**
-   到新任务时，Agent 会回忆两类东西：
 
-   * 之前提炼出的**高层经验规则**
-   * 与当前任务相似的**过往成功案例**
+3. **任务推理（Task Inference）**
+   测试新任务时，不允许重试（Reflexion），只有一次机会。此时 Agent 会做两件事：
+
+   * **用上所有提炼出的洞察：** 把这些自然语言写的“经验法则”直接放进提示词里，告诉模型要遵循这些经验。
+   * **从经验池中检索相似的成功轨迹：** 它会把当前任务（比如“把杯子放在灯下查看”）和向量数据库里的成功轨迹做比较，找出最相似的几个成功轨迹，作为 few-shot 例子放进提示词里。
+   
+   检索机制：用FAISS向量数据库，按任务相似度找最相关的成功案例作为"参考"。
+
+4. **其他论文方法**
+   * **ReAct**（Yao et al. 2023b）：作为基础的“思考-行动”循环，让智能体在每一步既能推理（Thought）又能执行（Action）。
+
+   * **Reflexion**（Shinn et al. 2023）：在经验收集阶段，让智能体在失败后自我反思，生成反思文本，并在下一次尝试中用上。
+
+   * **检索增强生成**（RAG）：用 Faiss 向量数据库和相似度检索，找到和当前任务最相似的成功轨迹作为 few-shot 例子。
 
 ## Alfworld-textworld（基于文本的交互式环境）
 **核心特点**
@@ -139,13 +163,26 @@ LongMemEval提供了两种标准设置以便进行一致的比较：
 * 部分可观测：智能体需要通过look和examine等动作探索环境来获取完整信息
 
 **任务类型**：
+
 1.Pick & Place (Put):将物品放到指定位置
+
 2.Clean (Clean):清洁物品
+
 3.Heat (Heat):加热物品（需在microwave/oven）
+
 4.Cool (Cool):冷却物品（需在fridge）
+
 5.Examine (Look):使用台灯查看物品
+
 6.PickTwo (PutTwo):放置两个物品
 
-<img width="640" height="480" alt="image" src="https://github.com/user-attachments/assets/f3f374c5-171d-4b76-834e-7602fb662d75" />
+|                | 经验收集阶段（训练）               | 任务评估阶段（测试）              |
+| :------------- | :----------------------- | :---------------------- |
+| **任务来源**       | 训练集任务                    | 测试集任务（全新、未见过的）          |
+| **尝试次数**       | 最多 Z 次重试（用Reflexion收集经验） | **只允许1次尝试**     |
+| **目标**         | 积累经验、提取洞察                | 检验学习成果                  |
 
-<img width="640" height="480" alt="expel_eval" src="https://github.com/user-attachments/assets/f53bedc0-a9c5-42e2-9094-d14f839e1e51" />
+
+<img width="640" height="480" alt="alfworld-train" src="https://github.com/user-attachments/assets/c2efb3b5-536b-41a2-acc7-a2501302c9e3" />
+
+<img width="640" height="480" alt="alfworld-eval" src="https://github.com/user-attachments/assets/b66c216f-e60f-4945-a009-0303d6c7209f" />
