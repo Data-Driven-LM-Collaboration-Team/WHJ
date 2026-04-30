@@ -355,3 +355,12 @@ MemRL 极度依赖 “高质量轨迹” 来进行 Q 值的正向更新。当使
 - **流程：** 首先，通过**轨迹智能提取器**对智能体的推理模式（思考、规划、反思）进行深度语义分析；其次，利用**决策归因分析器**区分导致失败或恢复的直接原因、近因和根本原因；最后，通过**上下文学习生成器**在任务级别（全局模式）和子任务级别（具体逻辑阶段，如身份验证、数据检索等）提取结构化的“Tips（提示）”，为智能体在未来的任务执行中提供情境感知的精准指导。
 
 <img width="2067" height="808" alt="image" src="https://github.com/user-attachments/assets/c890ccfd-d54d-4b7c-81cb-2cd283dca098" />
+
+## Seek-CAD
+
+<img width="1625" height="419" alt="image" src="https://github.com/user-attachments/assets/8091646a-42a3-4a65-bb27-5b33e1b13346" />
+Soildwork内核：Parasolid
+
+pythonocc基于OpenCASCADE
+<img width="2560" height="1249" alt="image" src="https://github.com/user-attachments/assets/b34967e6-370a-40f1-a2ce-2a7a35644c77" />
+
