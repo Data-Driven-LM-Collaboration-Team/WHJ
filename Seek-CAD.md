@@ -53,5 +53,46 @@ indentations = Extrude(sk2, distance=(0, -3))  # Indentation depth=3mm
 final_shape = cylinder.cut(pacman_cut).cut(indentations)  
 ```
 
-<img width="1347" height="1168" alt="ChatGPT Image May 13, 2026, 12_55_32 PM" src="https://github.com/user-attachments/assets/469d527b-e407-4510-b34e-75250fb6d6fa" />
+## Exp_SSR
+
+**Seek-CAD RAG Text2SSR 示例**
+<img width="1646" height="654" alt="image" src="https://github.com/user-attachments/assets/92c78517-a3f3-4727-9038-a9043978b68a" />
+
+
+**Exp经验记忆库每条记忆在Text2SSR的基础上额外写入**
+```
+memory_text              用于 exp_rag 向量嵌入和 sparse（精确关键词）匹配
+memory_summary           注入 prompt 的简短可复用经验
+intent_tags              从描述解析出的 CAD 意图标签
+geometry_terms           几何关键词和同义词
+operation_counts         SSR 代码中的 Sketch/Profile/Extrude/cut/union 等统计
+construction_patterns    例如 extrude_based、subtractive_cut、sketch_arc_profile
+construction_recipe      可复用的构造步骤摘要
+risk_tags                例如 plane_orientation、arc_closure_validity、topology_reference_validity
+```
+
+
+**Exp card**
+从若干个Seek-CAD生成案例中总结经验，为每个案例生成一条经验。
+
+
+**检索实现**
+使用bge-m3 hybrid。Baseline的 case 检索索引原始自然语言描述 + SSR Code; Exp_SSR 的 case 检索默认索引经验记忆库的 `memory_text`，其中包含任务语义、intent tags、geometry terms、construction patterns、operation counts、construction recipe 和 risk tags。检索结果仍返回原始 SSR code，供 prompt 作为可执行风格示例。
+
+**ground truth**
+
+<img width="256" height="192" alt="image" src="https://github.com/user-attachments/assets/ffd848a7-482f-41a3-851e-077b190f185e" /> <img width="256" height="192" alt="image" src="https://github.com/user-attachments/assets/dc7fc6d2-d97e-4847-976c-e0942c1feb88" /> <img width="256" height="192" alt="image" src="https://github.com/user-attachments/assets/ab473a1b-d7ff-4d2f-8de8-c2cd7efd4025" /> 
+
+
+**Seek-CAD**
+
+<img width="256" height="192" alt="image" src="https://github.com/user-attachments/assets/2fb645de-8286-492f-8d55-4ba172b14283" /> <img width="256" height="192" alt="image" src="https://github.com/user-attachments/assets/797859c2-5247-4680-ab76-f027b4a5fb0b" /> <img width="256" height="192" alt="image" src="https://github.com/user-attachments/assets/a3fa76e6-6818-4f36-9397-fb442f73c917" />
+
+
+**Ours**
+
+<img width="256" height="192" alt="image" src="https://github.com/user-attachments/assets/b5d7a59a-9a2a-42c5-8638-34881b9ebcd1" /> <img width="256" height="192" alt="image" src="https://github.com/user-attachments/assets/2ae36a9f-74ee-421f-be5a-2117292756c8" /> <img width="256" height="192" alt="image" src="https://github.com/user-attachments/assets/02b60fa7-9377-4461-92a2-e2ad65733d9d" />
+
+
+
 
