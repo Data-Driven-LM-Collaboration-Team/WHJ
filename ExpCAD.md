@@ -79,20 +79,16 @@ risk_tags                例如 plane_orientation、arc_closure_validity、topol
 **检索实现**
 使用bge-m3 hybrid。Baseline的 case 检索索引原始自然语言描述 + SSR Code; Exp_SSR 的 case 检索默认索引经验记忆库的 `memory_text`，其中包含任务语义、intent tags、geometry terms、construction patterns、operation counts、construction recipe 和 risk tags。检索结果仍返回原始 SSR code，供 prompt 作为可执行风格示例。
 
-**ground truth**
+## STEP 文件生成与记忆库构建思路
 
-<img width="256" height="192" alt="image" src="https://github.com/user-attachments/assets/ffd848a7-482f-41a3-851e-077b190f185e" /> <img width="256" height="192" alt="image" src="https://github.com/user-attachments/assets/dc7fc6d2-d97e-4847-976c-e0942c1feb88" /> <img width="256" height="192" alt="image" src="https://github.com/user-attachments/assets/ab473a1b-d7ff-4d2f-8de8-c2cd7efd4025" /> 
+**STEP 文件**：内部描述了三维模型的几何信息、拓扑关系以及产品结构信息。一个 STEP 文件通常由 `HEADER` 和 `DATA` 两部分组成：`HEADER` 记录文件来源、单位、标准版本等元信息；`DATA` 则通过大量带编号的实体描述模型本身（点、方向、曲线、曲面、边、环、面、壳体和实体等）。这些实体之间通过 `#id` 形式相互引用，从而构成一个完整的几何-拓扑结构。基于这一特点，STEP 文件具备一定的“可读性”和“结构化文本”特征，因此可以被大语言模型解析和理解。
 
+<img width="2560" height="1249" alt="image" src="https://github.com/user-attachments/assets/bb887cb5-78bc-46b6-bcf0-13a776657ab7" />
 
-**Seek-CAD**
+**description: A 90-degree pipe elbow connector.**
 
-<img width="256" height="192" alt="image" src="https://github.com/user-attachments/assets/2fb645de-8286-492f-8d55-4ba172b14283" /> <img width="256" height="192" alt="image" src="https://github.com/user-attachments/assets/797859c2-5247-4680-ab76-f027b4a5fb0b" /> <img width="256" height="192" alt="image" src="https://github.com/user-attachments/assets/a3fa76e6-6818-4f36-9397-fb442f73c917" />
+当前已经尝试让 LLM 根据自然语言描述直接生成 STEP 文件。虽然模型往往难以一次性生成完全正确、可直接打开并编辑的 STEP 模型文件，但 LLM 能够在后续多轮交互中读取生成文件的内容，分析其中可能存在的实体引用错误、结构缺失、格式不完整或拓扑不一致问题，并逐步进行修复。经过若干轮检查与修改后，模型可以输出能够在 SolidWorks 等 CAD 软件中打开的 STEP 文件。这说明 LLM 已经具备一定的 STEP 文件语义理解能力和错误修复能力。
 
+**目的**：引入记忆库机制，去提升 STEP 文件生成的成功率和模型准确性。构建记忆库的前提是设计一种结构化的中间格式。该中间格式可以记录模型的基础形体、局部特征、空间关系、关键 STEP 实体模式，例如孔、槽、倒角、圆角、凸台、壳体等常见 CAD 特征如何在 STEP 文件中被表达。通过这种方式，系统可以将成功生成的案例沉淀为可复用的经验记忆，在面对新的自然语言描述时检索相似结构或相似特征，辅助 LLM 更稳定地生成 STEP 文件。
 
-**Ours**
-
-<img width="256" height="192" alt="image" src="https://github.com/user-attachments/assets/b5d7a59a-9a2a-42c5-8638-34881b9ebcd1" /> <img width="256" height="192" alt="image" src="https://github.com/user-attachments/assets/2ae36a9f-74ee-421f-be5a-2117292756c8" /> <img width="256" height="192" alt="image" src="https://github.com/user-attachments/assets/02b60fa7-9377-4461-92a2-e2ad65733d9d" />
-
-
-
-
+**失败案例及其修复过程**：对于无法打开、无法渲染或结构错误的 STEP 文件，可以记录其错误类型、错误位置、失败原因、修复策略以及修复后的有效结果，形成失败案例修复记忆库。后续当系统生成类似错误的 CAD 模型时，可以根据错误签名或 STEP 结构特征检索历史修复经验，指导 LLM 自动修复失败模型。因此，记忆库的作用不仅体现在生成阶段，也体现在验证与修复阶段。
