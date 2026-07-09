@@ -95,12 +95,12 @@ risk_tags                例如 plane_orientation、arc_closure_validity、topol
 
 ## 中间结构构成
 
-### 自然语言直接生成 STEP 或 CAD 代码存在的问题
-1. 语义不稳定：自然语言中的“中心孔”“侧面槽”“圆角边缘”等描述需要被转译为明确的 CAD 特征类型。CGIR 通过 Feature Graph 将模糊语义固化为结构化节点。
-2. 空间关系隐含：很多关系并非显式尺寸，而是相对位置、朝向、贯穿、附着、对齐。CGIR 在 Geometry & Constraint Layer 中显式编码这些约束。
-3. 建模顺序重要：CAD 中通常先建基体，再做局部加减，最后修饰。CGIR 通过 Construction Plan Layer 强制规定合理的执行拓扑序。
-4. STEP/B-rep 过于底层：直接让 LLM 生成 STEP 实体引用图极易出现引用缺失、拓扑不闭合等错误。CGIR 不直接生成 STEP 文本，而是通过 "CGIR → Construction Plan → CAD Kernel 操作 → B-rep → STEP 导出" 的降级链路，利用成熟 CAD 内核（如 OpenCASCADE）的可靠性来规避手写 STEP 的风险。
-5. 可验证性不足：如果中间结构不显式表达期望特征，就无法判断生成结果是否符合描述。Validation Expectation Layer 提供了从 CGIR 派生的、可自动检查的验收标准。
+### 自然语言直接生成 STEP 存在的问题
+1. 语义不够精确：自然语言中的“中心孔”“外边圆角”“侧面槽”等说法，需要先转成明确的 CAD feature、方向、位置和作用对象。
+2. STEP 结构过于底层：STEP/B-rep 由点、边、环、面、壳体、实体等大量引用关系组成，直接生成文本很容易出现引用缺失、面不闭合、方向错误或拓扑非法。
+3. 建模顺序重要：CAD 中通常先建基体，再做局部特征加减，最后做修饰。CGIR 通过 Construction Plan Layer 强制规定合理的执行拓扑序。
+4. 失败难以定位：如果直接生成 STEP，失败时很难判断问题来自语义理解、参数推断、建模顺序、后端操作，还是 STEP 导出。
+5. 结果需要语义验证：文件能打开不代表语义正确，还需要验证孔、圆角、bbox、surface 类型等是否符合预期。
 
 所以中间结构应承担“语义解析、几何规划、建模组织、生成约束和验证对齐”的桥梁作用，使自然语言生成 CAD 成为一个可检查、可调试、可逐步落地的工程化流程，而非一次性的黑箱文本生成。
 
@@ -111,8 +111,8 @@ risk_tags                例如 plane_orientation、arc_closure_validity、topol
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | **Task Semantics Layer**         | 保留原始自然语言描述，提取对象类型、特征标签、空间关系等高层语义。                                                                                         |
 | **Part / Body Layer**            | 定义模型中的实体（body/part）、坐标系、单位，区分 base/additive/cutting/reference 等角色，避免多实体语义混乱。                                              |
-| **Feature Graph Layer**          | **核心层**。用节点表示 CAD 特征（如 box\_base、through\_hole、fillet、boss），用边表示特征间关系（如 subtract\_from、union\_with、refines、attached\_to）。 |
-| **Geometry & Constraint Layer**  | 为每个特征补充精确的几何参数、定位、方向、草图平面、约束（如 concentric、parallel），并显式标记参数来源（explicit / inferred / default / relative）。                  |
+| **Feature Graph Layer**          | **核心层**。用节点表示 CAD 特征，用边表示特征间关系。                                                                                     |
+| **Geometry & Constraint Layer**  | 为每个特征补充精确的几何参数、定位、方向、草图平面、约束，并显式标记参数来源。                  |
 | **Construction Plan Layer**      | 将 Feature Graph 转换为可执行的建模步骤序列，规定每步的输入/输出 body、操作类型及前置条件。                                                                  |
 | **Target Mapping Layer**         | 描述 CGIR 如何降级到具体后端（如 OpenCASCADE、FreeCAD），定义每个特征对应的 kernel 操作策略及预期的 B-rep 模式。                                              |
 | **Validation Expectation Layer** | 定义生成结果的验收标准：实体数量、预期特征是否存在、B-box/体积范围、面类型、STEP 可打开性与 roundtrip 成功性。                                                        |
@@ -126,5 +126,6 @@ risk_tags                例如 plane_orientation、arc_closure_validity、topol
 | **Geometry & Constraint Layer**  | 用于**参数与约束的比对**。当遇到新任务时，可检索历史案例中相似特征的尺寸、位置和约束配置，进行参数复用或推断补全。            |
 | **Construction Plan Layer**      | 作为**成功建模经验的复用单元**。若某类 Feature Graph 的构造计划已被验证可行，可直接复用其步骤序列。            |
 | **Target Mapping Layer**         | 用于**后端生成策略的复用**。特定特征组合到特定 CAD kernel 的降级策略一旦跑通，可被后续相同或相似特征组合直接调用。      |
-| **Validation Expectation Layer** | 用于**经验筛选与质量门禁**。只有满足验证预期的案例（生成成功、STEP 往返成功、模型语义对齐）才允许进入经验库，避免失败噪声污染记忆。 |
-
+| **Validation Expectation Layer** | 用于**判断经验是否可靠、是否可进入成功经验库。**。只有满足验证预期的案例（生成成功、STEP 往返成功、模型语义对齐）才允许进入经验库，避免失败噪声污染记忆。 |
+| **Execution Log / Validation Report** | 用于**记录成功、失败和修复线索。 **                                         |
+           
