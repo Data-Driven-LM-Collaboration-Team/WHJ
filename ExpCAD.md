@@ -109,23 +109,38 @@ risk_tags                例如 plane_orientation、arc_closure_validity、topol
 
 | 层级                               | 核心作用                                                                                                                      |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| **Task Semantics Layer**         | 保留原始自然语言描述，提取对象类型、特征标签、空间关系等高层语义。                                                                                         |
-| **Part / Body Layer**            | 定义模型中的实体（body/part）、坐标系、单位，区分 base/additive/cutting/reference 等角色，避免多实体语义混乱。                                              |
-| **Feature Graph Layer**          | **核心层**。用节点表示 CAD 特征，用边表示特征间关系。                                                                                     |
-| **Geometry & Constraint Layer**  | 为每个特征补充精确的几何参数、定位、方向、草图平面、约束，并显式标记参数来源。                  |
-| **Construction Plan Layer**      | 将 Feature Graph 转换为可执行的建模步骤序列，规定每步的输入/输出 body、操作类型及前置条件。                                                                  |
-| **Target Mapping Layer**         | 描述 CGIR 如何降级到具体后端（如 OpenCASCADE、FreeCAD），定义每个特征对应的 kernel 操作策略及预期的 B-rep 模式。                                              |
-| **Validation Expectation Layer** | 定义生成结果的验收标准：实体数量、预期特征是否存在、B-box/体积范围、面类型、STEP 可打开性与 roundtrip 成功性。                                                        |
+| **Task Semantics Layer**         | 保存原文、对象类型、已用特征和未覆盖需求。                                                                                         |
+| **Part / Body Layer**            | 定义 mm 单位、坐标系和一个或多个 solid body。                                              |
+| **Feature Graph Layer**          | 定义特征及其先后依赖。                                                                                     |
+| **Geometry & Constraint Layer**  | 定义参数、局部坐标系、闭合轮廓和边/面选择器。                  |
 
-### 后续如何与经验记忆对接
-后续经验记忆将基于 CGIR 的各层结构进行检索、比对和复用
-| CGIR 层级                          | 在经验记忆中的作用                                                              |
-| -------------------------------- | ---------------------------------------------------------------------- |
-| **Task Semantics Layer**         | 作为**自然语言任务相似性检索**的索引。通过对象类型、特征标签和关系描述，检索历史上相似的设计意图描述。                  |
-| **Feature Graph Layer**          | 作为**相似 CAD 结构检索**的结构键。通过特征类型组合与特征关系图，匹配历史上成功生成过的模型拓扑。                  |
-| **Geometry & Constraint Layer**  | 用于**参数与约束的比对**。当遇到新任务时，可检索历史案例中相似特征的尺寸、位置和约束配置，进行参数复用或推断补全。            |
-| **Construction Plan Layer**      | 作为**成功建模经验的复用单元**。若某类 Feature Graph 的构造计划已被验证可行，可直接复用其步骤序列。            |
-| **Target Mapping Layer**         | 用于**后端生成策略的复用**。特定特征组合到特定 CAD kernel 的降级策略一旦跑通，可被后续相同或相似特征组合直接调用。      |
-| **Validation Expectation Layer** | 用于**判断经验是否可靠、是否可进入成功经验库。**。只有满足验证预期的案例（生成成功、STEP 往返成功、模型语义对齐）才允许进入经验库，避免失败噪声污染记忆。 |
-| **Execution Log / Validation Report** | 用于**记录成功、失败和修复线索。 **                                         |
+当前执行器支持 22 类特征：5 类 base（box、plate、cylinder、ring、profile extrusion），6 类切除（贯通孔、盲孔、slot、pocket、groove、notch），4 类加料（boss、rib、pillar、flange），3 类修饰（fillet、chamfer、shell）和 4 类 pattern（线性、圆周、镜像、显式实例）。孔、轮廓和加料的位置必须通过已存在实体的局部 frame 表达；pattern 只能复制已执行的同一 body 的加料或切除特征。
+
+能力边界：
+
+- 不支持 sweep、loft、revolve、自由曲面、B-spline 曲面或任意草图约束。
+- 可导出多个互不相连的 solid 为 compound STEP，但不支持装配层级、装配约束或跨 body boolean。
+- shell 只适用于一个可解析的 opening face；复杂 boolean 之后的任意面/边拓扑命名和通用薄壳并不稳定。
+- PMI/GD&T、制造语义和未给出的尺寸、位置、数量均不能由 CGIR 自动补成“正确答案”。
            
+### 最新实验
+
+- CGIR 校验通过：7/10；STEP 成功导出：6/10。
+- 失败：2 条 Schema 违规、1 条同一 body 有 5 个 base feature、1 条生成空实体。
+- 9/10 条用满 thinking budget；没有输出截断。因此下一步优先补结构约束和修复，不应先加大 token 上限。
+- 71 个参数来自默认策略、11 个被模型写为 inferred；原文没有显式尺寸。渲染出的绝对尺度只是默认值，不能当成文本中的真实尺寸。
+
+### 文本与结果的人工核对
+
+下表只判断描述中可直接观察到的主特征；它不是 ground-truth CAD 评测。
+
+| 样本 | 对照结果 | 判断 |
+| --- | --- | --- |
+| 003，十字挤出体与圆角 | 十字主轮廓和圆角外观可见。 | 主体吻合；圆角目标边被宽泛选择|
+| 004，梯形棱柱与沿长度的 V 槽 | 梯形主体正确；CGIR 中 V_GROOVE_PROFILE 实际是矩形。 | **不吻合**：V 槽被替换为矩形槽 |
+| 005，圆端棱柱与两端圆孔 | 两个孔存在；圆端轮廓写成八边形折线。 | 部分吻合：以折角近似圆端 |
+| 006，贯通矩形空腔与三个等距孔 | 矩形体、中央切口、三孔均生成。 | 主特征存在；腔体方向、孔距和阵列方向均由默认值决定 |
+| 007，三角棱柱与中部三角切除 | 三角柱与顶部三角切口可见。 | 主体吻合 |
+| 009，倒角、内腔、四个角部六角凹坑 | 倒角、内腔和六角凹坑可见。 | **不吻合**：CGIR 只有 3 个六角 pocket（F3–F5），文本要求 4 个。 |
+
+<img width="1280" height="540" alt="image" src="https://github.com/user-attachments/assets/f32ae40e-9e94-4e84-8e8b-a52652f6934c" />
